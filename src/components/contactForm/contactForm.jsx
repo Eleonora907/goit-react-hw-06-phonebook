@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { nanoid } from 'nanoid';
-import Notiflix from 'notiflix';
+import React from 'react';
 import { Button, Form, Input, Label } from './contactForm.styled';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact, selectContacts } from 'redux/phoneBookSlice';
+import Notiflix from 'notiflix';
 
-export const ContactForm = ({ addContact }) => {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+export const ContactForm = () => {
+  const [name, setName] = React.useState('');
+  const [number, setNumber] = React.useState('');
+  const contacts = useSelector(selectContacts);
+  const dispatch = useDispatch();
 
-  const handleChange = event => {
-    const { name, value } = event.target;
-    if (name === 'number' && !/^\d*$/.test(value)) {
-      Notiflix.Notify.failure('Only numbers are allowed in the phone number field');
-      return;
-    }
+  const handleChange = e => {
+    const { name, value } = e.target;
     if (name === 'name') {
       setName(value);
     } else if (name === 'number') {
@@ -21,16 +19,20 @@ export const ContactForm = ({ addContact }) => {
     }
   };
 
-  const handleSubmit = event => {
-    event.preventDefault();
-    if (name.trim() === '' || number.trim() === '') {
+  const handleSubmit = e => {
+    e.preventDefault();
+    const isContactExist = contacts.some(
+      contact => contact.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (isContactExist) {
+      Notiflix.Notify.failure(`${name} is already in contacts`);
       return;
     }
-    addContact({ id: nanoid(), name, number });
+    dispatch(addContact({ name, number }));
     setName('');
     setNumber('');
   };
-
   return (
     <Form onSubmit={handleSubmit}>
       <Label>
@@ -57,8 +59,3 @@ export const ContactForm = ({ addContact }) => {
     </Form>
   );
 };
-
-ContactForm.propTypes = {
-  addContact: PropTypes.func.isRequired,
-};
-
